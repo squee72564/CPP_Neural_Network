@@ -7,7 +7,22 @@ NeuralNet::NeuralNet(const std::vector<uint32_t> &topology)
   : layers_(topology.size())
 {
     for (int i = 0; i < layers_.size(); ++i) {
-        layers_[i].resize(topology[i]);
+
+        const uint32_t num_neuron_outputs = (i == layers_.size()-1)
+            ? 0 
+            : topology[i+1];
+
+        layers_[i] = Layer(
+                topology[i] + 1, // Include Bias Neuron
+                Neuron(num_neuron_outputs)
+            );
+
+        // Randomize weights in each connection for each neuron
+        for (auto& neuron : layers_[i]) {
+            for (auto& connection : neuron.output_weights_) {
+                connection.weight_ = get_random_weight();
+            }
+        }
     }
 }
 
