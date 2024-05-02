@@ -4,11 +4,7 @@
 #include <vector>
 #include <iostream>
 #include <random>
-#include <ctime>
 #include <cassert>
-#include <cmath>
-#include <fstream>
-#include <sstream>
 #include <cstdint>
 
 #include "Neuron.hpp"
