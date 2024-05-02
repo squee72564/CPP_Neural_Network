@@ -6,7 +6,7 @@
 
 int main() {
     
-    std::vector<uint32_t> topology = {8, 128, 32, 10};
+    std::vector<uint32_t> topology = {2, 128, 64, 32, 16, 10};
     std::vector<double> input_values = {1};
     std::vector<double> target_values = {2};
     std::vector<double> result_values = {3};
