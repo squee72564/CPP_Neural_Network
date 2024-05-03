@@ -12,7 +12,7 @@ public:
     double weight_;
     double delta_weight_;
 
-    Connection() : weight_(0), delta_weight_(0) {};
+    Connection() : weight_(0.0f), delta_weight_(0.0f) {};
 };
 
 class NNLayer {
@@ -30,11 +30,12 @@ public:
     NNLayer(uint32_t layer_size, uint32_t num_outputs, ActivationFunction f);
 	~NNLayer();
 
-    std::vector<std::vector<Connection>> output_weights_;
-    std::vector<double> output_values_;
+    // Each container will be layer_size_ size and includes the bias neuron
+    uint32_t layer_size_;
+    std::vector<std::vector<Connection>> output_weights_;   // num_outputs connections to the next layer
+    std::vector<double> output_values_;                     
     std::vector<double> gradients_;
     ActivationFunction activation_function_;
-    uint32_t layer_size_;
     
     static double eta_;
     static double alpha_;
@@ -48,12 +49,12 @@ public:
 
     double ApplyActivationFunction(double x);
     double ApplyActivationFunctionDerivative(double x);
-    void ApplySoftMax();
     double SumDOW(const uint32_t curr_idx, const NNLayer &next_layer) const;
     void FeedForward(const NNLayer& prev_layer);
     void CalculateOutputGradients(const std::vector<double> &target_values);
     void CalculateHiddenGradients(const NNLayer &next_layer);
     void UpdateInputWeights(NNLayer &prev_layer);
+    void ApplySoftMax();
 };
 
 #endif
