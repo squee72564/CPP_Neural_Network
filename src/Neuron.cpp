@@ -1,5 +1,8 @@
 #include "Neuron.hpp"
 
+inline double Neuron::eta_ = 0.25f;    // overall net learning
+inline double Neuron::alpha_ = 0.3f;   // momentum, multiplier of last delta_weight
+
 Neuron::Neuron(uint32_t num_outputs)
   : output_weights_(num_outputs),
     output_value_(0.0f),
@@ -32,7 +35,6 @@ void Neuron::FeedForward(const Layer& prev_layer) {
     }
 
     output_value_ = Neuron::ActivationFunction(sum);
-
 }
 
 void Neuron::CalculateOuputGradients(const double target_value) {

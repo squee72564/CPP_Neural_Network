@@ -3,6 +3,10 @@
 #include <iostream>
 #include <string>
 
+std::random_device NeuralNet::rd;
+std::mt19937 NeuralNet::gen(rd());
+std::uniform_real_distribution<double> NeuralNet::dis(0.0f, 1.0f);
+
 NeuralNet::NeuralNet(const std::vector<uint32_t> &topology) 
   : layers_(topology.size()),
     error_(0.0f),
