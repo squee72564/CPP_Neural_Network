@@ -7,16 +7,14 @@
 #include <cassert>
 #include <cstdint>
 
-#include "Neuron.hpp"
-
-class Neuron;
+#include "NLayer.hpp"
 
 
 class NeuralNet {
 public:
     struct LayerConfig {
         uint32_t size_;
-        Neuron::ActivationFunction activation_function_;
+        NLayer::ActivationFunction activation_function_;
     };
 
     NeuralNet(const std::vector<LayerConfig> &topology);
@@ -26,7 +24,6 @@ public:
     void GetResults(std::vector<double> &result_vals) const;
     double get_recent_average_error() const;
     inline double get_random_weight() const;
-    static void ApplySoftMax(std::vector<Neuron>& curr_layer);
 
     static std::random_device rd;
     static std::mt19937 gen;
@@ -34,7 +31,7 @@ public:
 
 private:
 
-    std::vector<Layer> layers_;
+    std::vector<NLayer> layers_;
     double error_;
     double recent_average_error_;
     double recent_average_smoothing_factor_;
