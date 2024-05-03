@@ -8,8 +8,16 @@
 #include "NeuralNet.hpp"
 #include "MNIST.hpp"
 
-std::vector<std::vector<double>> normalize_image_data(std::vector<std::vector<unsigned char>> data, uint32_t num_images, uint32_t image_size);
-std::vector<std::vector<double>> hot_encode_target_data(std::vector<unsigned char> data, uint32_t num_images);
+std::vector<std::vector<double>> normalize_image_data(
+        std::vector<std::vector<unsigned char>> data,
+        uint32_t num_images, uint32_t image_size
+    );
+
+std::vector<std::vector<double>> hot_encode_target_data(
+        std::vector<unsigned char> data,
+        uint32_t num_images
+    );
+
 void display_normalized_image(std::vector<double> &image_data);
 
 int main(int argc, char** argv) {
@@ -18,21 +26,31 @@ int main(int argc, char** argv) {
         std::cerr << "Usage: " << argv[0] << "mnist_img_path mnist_labels_path\n";
         return 1;
     }
-
+    
+    std::vector<std::vector<unsigned char> > train_x;
+    std::vector<unsigned char> train_y;
     uint32_t num_test_imgs = 0;
     uint32_t img_size = 0;
-    std::vector<std::vector<unsigned char> > train_x = MNIST::read_mnist_images(argv[1], num_test_imgs, img_size);
-
     uint32_t num_labels = 0;
-    std::vector<unsigned char> train_y = MNIST::read_mnist_labels(argv[2], num_labels);
+
+    try {
+        train_x = MNIST::read_mnist_images(argv[1], num_test_imgs, img_size);
+        train_y = MNIST::read_mnist_labels(argv[2], num_labels);
+    } catch (std::runtime_error error) {
+        std::cerr << error.what() << std::endl;
+        return -1;
+    };
 
     std::cout << "test imgs: " << num_test_imgs << " , size : " << img_size << "\n";
     std::cout << "num labels: " << num_labels << "\n";
 
-    std::vector<std::vector<double>> train_x_normalized = normalize_image_data(train_x, num_test_imgs, img_size);
-    std::vector<std::vector<double>> train_y_encoded = hot_encode_target_data(train_y, num_test_imgs);
+    std::vector<std::vector<double>> train_x_normalized =
+            normalize_image_data(train_x, num_test_imgs, img_size);
+
+    std::vector<std::vector<double>> train_y_encoded =
+            hot_encode_target_data(train_y, num_test_imgs);
     
-    std::vector<NeuralNet::LayerConfig> topology = {
+    std::vector<NNLayer::LayerConfig> topology = {
         {img_size, NNLayer::InputLayer},
         {22, NNLayer::TanH},
         {14, NNLayer::TanH},
@@ -75,6 +93,14 @@ int main(int argc, char** argv) {
         std::cout << "[ ";
         for (int j = 0; j < train_y_encoded[rand_index].size(); ++j) {
             std::cout << train_y_encoded[rand_index][j] << " "; 
+        }
+        std::cout << " ]\n";
+
+        auto max_ele = std::max_element(result_values.begin(), result_values.end());
+        std::cout << "[ ";
+        for (auto it = result_values.begin(); it < result_values.end(); ++it) {
+            const int t = (it == max_ele) ? 1 : 0;
+            std::cout << t << " "; 
         }
         std::cout << " ]\n";
 
