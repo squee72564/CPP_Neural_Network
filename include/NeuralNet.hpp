@@ -12,12 +12,7 @@
 
 class NeuralNet {
 public:
-    struct LayerConfig {
-        uint32_t size_;
-        NNLayer::ActivationFunction activation_function_;
-    };
-
-    NeuralNet(const std::vector<LayerConfig> &topology);
+    NeuralNet(const std::vector<NNLayer::LayerConfig> &topology);
 
     void FeedForward(const std::vector<double> &input_vals);
     void BackPropagation(const std::vector<double> &target_vals);

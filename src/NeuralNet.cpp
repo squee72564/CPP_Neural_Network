@@ -7,7 +7,7 @@ std::random_device NeuralNet::rd;
 std::mt19937 NeuralNet::gen(rd());
 std::uniform_real_distribution<double> NeuralNet::dis(0.0f, 1.0f);
 
-NeuralNet::NeuralNet(const std::vector<LayerConfig> &topology) 
+NeuralNet::NeuralNet(const std::vector<NNLayer::LayerConfig> &topology) 
   : layers_(topology.size()),
     error_(0.0f),
     recent_average_error_(0.0f),
