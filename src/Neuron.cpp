@@ -70,8 +70,8 @@ double Neuron::SumDOW(const Layer &next_layer) const {
 void Neuron::FeedForward(const Layer& prev_layer) {
     double sum = 0.0f;
     
-    for (const Neuron &neuron : prev_layer) {
-        sum += neuron.output_value_ * neuron.output_weights_[neuron_index_].weight_;
+    for (const Neuron &prev_neuron : prev_layer) {
+        sum += prev_neuron.output_value_ * prev_neuron.output_weights_[neuron_index_].weight_;
     }
     
     output_value_ = ApplyActivationFunction(sum);
