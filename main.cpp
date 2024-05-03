@@ -6,41 +6,31 @@
 #include <cstdlib>
 
 #include "NeuralNet.hpp"
+#include "MNIST.hpp"
 
-unsigned char** read_mnist_images(std::string full_path, uint32_t& number_of_images, uint32_t& image_size);
-unsigned char* read_mnist_labels(std::string full_path, uint32_t& number_of_labels);
+std::vector<std::vector<double>> normalize_image_data(std::vector<std::vector<unsigned char>> data, uint32_t num_images, uint32_t image_size);
+std::vector<std::vector<double>> hot_encode_target_data(std::vector<unsigned char> data, uint32_t num_images);
 void display_normalized_image(std::vector<double> &image_data);
-std::vector<std::vector<double>> normalize_image_data(unsigned char** data, uint32_t num_images, uint32_t image_size);
-std::vector<std::vector<double>> normalize_target_data(unsigned char* data, uint32_t num_images);
 
 int main(int argc, char** argv) {
     
     if (argc != 3) {
-        std::cerr << "Usage: " << argv[0] << "mnist_img mnist_labels\n";
+        std::cerr << "Usage: " << argv[0] << "mnist_img_path mnist_labels_path\n";
         return 1;
     }
 
     uint32_t num_test_imgs = 0;
     uint32_t img_size = 0;
-    unsigned char** train_x = read_mnist_images(argv[1], num_test_imgs, img_size);
+    std::vector<std::vector<unsigned char> > train_x = MNIST::read_mnist_images(argv[1], num_test_imgs, img_size);
 
     uint32_t num_labels = 0;
-    unsigned char* train_y = read_mnist_labels(argv[2], num_labels);
+    std::vector<unsigned char> train_y = MNIST::read_mnist_labels(argv[2], num_labels);
 
     std::cout << "test imgs: " << num_test_imgs << " , size : " << img_size << "\n";
     std::cout << "num labels: " << num_labels << "\n";
 
     std::vector<std::vector<double>> train_x_normalized = normalize_image_data(train_x, num_test_imgs, img_size);
-    std::vector<std::vector<double>> train_y_normalized = normalize_target_data(train_y, num_test_imgs);
-
-    // Freeing un-normalized data that was allocated
-    for (int i = 0; i < num_test_imgs; ++i) {
-        delete[] train_x[i];
-    }
-
-    delete[] train_x;
-
-    delete[] train_y;
+    std::vector<std::vector<double>> train_y_encoded = hot_encode_target_data(train_y, num_test_imgs);
     
     std::vector<NeuralNet::LayerConfig> topology = {
         {img_size, Neuron::InputLayer},
@@ -49,13 +39,13 @@ int main(int argc, char** argv) {
         {10, Neuron::SoftMax},
     };
 
-    assert(train_x_normalized.size() == train_y_normalized.size());
+    assert(train_x_normalized.size() == train_y_encoded.size());
 
     std::vector<double> result_values = {};
 
     NeuralNet myNet(topology);
-    Neuron::alpha_ = 0.07251231231f;
-    Neuron::eta_ = 0.00223512412414f;
+    Neuron::alpha_ = 0.314159265399999f;
+    Neuron::eta_ = 0.00314159265399999f;
    
     for (int epoch = 0; epoch <= 100; ++epoch) {
         int rand_index = rand() % train_x_normalized.size();
@@ -71,19 +61,20 @@ int main(int argc, char** argv) {
             }
 
             // Train the net what the outputs should have been
-            assert(train_y_normalized[i].size() == topology.back().size_);
-            myNet.BackPropagation(train_y_normalized[i]);
+            assert(train_y_encoded[i].size() == topology.back().size_);
+            myNet.BackPropagation(train_y_encoded[i]);
 
         }
 
+        // Display error and a random tested image from this epoch
         display_normalized_image(train_x_normalized[rand_index]);
         std::cout << "Error " << epoch << ": " << myNet.get_recent_average_error() << "\n";
 
-        assert(result_values.size() == train_y_normalized[rand_index].size());
+        assert(result_values.size() == train_y_encoded[rand_index].size());
 
         std::cout << "[ ";
-        for (int j = 0; j < train_y_normalized[rand_index].size(); ++j) {
-            std::cout << train_y_normalized[rand_index][j] << " "; 
+        for (int j = 0; j < train_y_encoded[rand_index].size(); ++j) {
+            std::cout << train_y_encoded[rand_index][j] << " "; 
         }
         std::cout << " ]\n";
 
@@ -99,66 +90,28 @@ int main(int argc, char** argv) {
     return 0;
 }
 
-unsigned char** read_mnist_images(std::string full_path, uint32_t& number_of_images, uint32_t& image_size) {
-    auto reverseInt = [](int i) {
-        unsigned char c1, c2, c3, c4;
-        c1 = i & 255, c2 = (i >> 8) & 255, c3 = (i >> 16) & 255, c4 = (i >> 24) & 255;
-        return ((int)c1 << 24) + ((int)c2 << 16) + ((int)c3 << 8) + c4;
-    };
+std::vector<std::vector<double>> normalize_image_data(std::vector<std::vector<unsigned char>> data, uint32_t num_images, uint32_t image_size) {
+    std::vector<std::vector<double>> normalizedData(num_images, std::vector<double>(image_size, 0.0f));
 
-    std::ifstream file(full_path, std::ios::binary);
-
-    if(file.is_open()) {
-        int magic_number = 0, n_rows = 0, n_cols = 0;
-
-        file.read((char *)&magic_number, sizeof(magic_number));
-        magic_number = reverseInt(magic_number);
-
-        if(magic_number != 2051) throw std::runtime_error("Invalid MNIST image file!");
-
-        file.read((char *)&number_of_images, sizeof(number_of_images)), number_of_images = reverseInt(number_of_images);
-        file.read((char *)&n_rows, sizeof(n_rows)), n_rows = reverseInt(n_rows);
-        file.read((char *)&n_cols, sizeof(n_cols)), n_cols = reverseInt(n_cols);
-
-        image_size = n_rows * n_cols;
-
-        unsigned char** _dataset = new unsigned char*[number_of_images];
-        for(int i = 0; i < number_of_images; i++) {
-            _dataset[i] = new unsigned char[image_size];
-            file.read((char *)_dataset[i], image_size);
+    for (int i = 0; i < num_images; ++i) {
+        for (int j = 0; j < image_size; ++j) {
+            const double normalizedValue = static_cast<double>(data[i][j]) / 255.0f;
+            normalizedData[i][j] = normalizedValue;
         }
-        return _dataset;
-    } else {
-        throw std::runtime_error("Cannot open file `" + full_path + "`!");
     }
+
+    return normalizedData;
 }
 
-unsigned char* read_mnist_labels(std::string full_path, uint32_t& number_of_labels) {
-    auto reverseInt = [](int i) {
-        unsigned char c1, c2, c3, c4;
-        c1 = i & 255, c2 = (i >> 8) & 255, c3 = (i >> 16) & 255, c4 = (i >> 24) & 255;
-        return ((int)c1 << 24) + ((int)c2 << 16) + ((int)c3 << 8) + c4;
-    };
+std::vector<std::vector<double>> hot_encode_target_data(std::vector<unsigned char> data, uint32_t num_images) {
+    std::vector<std::vector<double>> normalizedData(num_images, std::vector<double>(10, 0.0f));
 
-    std::ifstream file(full_path, std::ios::binary);
-
-    if(file.is_open()) {
-        int magic_number = 0;
-        file.read((char *)&magic_number, sizeof(magic_number));
-        magic_number = reverseInt(magic_number);
-
-        if(magic_number != 2049) throw std::runtime_error("Invalid MNIST label file!");
-
-        file.read((char *)&number_of_labels, sizeof(number_of_labels)), number_of_labels = reverseInt(number_of_labels);
-
-        unsigned char* _dataset = new unsigned char[number_of_labels];
-        for(int i = 0; i < number_of_labels; i++) {
-            file.read((char*)&_dataset[i], 1);
-        }
-        return _dataset;
-    } else {
-        throw std::runtime_error("Unable to open file `" + full_path + "`!");
+    for (int i = 0; i < num_images; ++i) {
+        normalizedData[i][data[i]] = 1.0f;
     }
+
+    return normalizedData;
+
 }
 
 void display_normalized_image(std::vector<double> &image_data) {
@@ -172,28 +125,4 @@ void display_normalized_image(std::vector<double> &image_data) {
             std::cout << "\n";
     }
     std::cout << std::endl;
-}
-
-std::vector<std::vector<double>> normalize_image_data(unsigned char** data, uint32_t num_images, uint32_t image_size) {
-    std::vector<std::vector<double>> normalizedData(num_images, std::vector<double>(image_size, 0.0f));
-
-    for (int i = 0; i < num_images; ++i) {
-        for (int j = 0; j < image_size; ++j) {
-            const double normalizedValue = static_cast<double>(data[i][j]) / 255.0f;
-            normalizedData[i][j] = normalizedValue;
-        }
-    }
-
-    return normalizedData;
-}
-
-std::vector<std::vector<double>> normalize_target_data(unsigned char* data, uint32_t num_images) {
-    std::vector<std::vector<double>> normalizedData(num_images, std::vector<double>(10, 0.0f));
-
-    for (int i = 0; i < num_images; ++i) {
-        normalizedData[i][data[i]] = 1.0f;
-    }
-
-    return normalizedData;
-
 }
