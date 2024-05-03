@@ -3,13 +3,12 @@
 #include <string>
 #include <vector>
 #include <cstdint>
-#include <random>
+#include <cstdlib>
 
 #include "NeuralNet.hpp"
 
 unsigned char** read_mnist_images(std::string full_path, uint32_t& number_of_images, uint32_t& image_size);
 unsigned char* read_mnist_labels(std::string full_path, uint32_t& number_of_labels);
-void display_mnist_image(unsigned char* image_data, uint32_t image_size);
 void display_normalized_image(std::vector<double> &image_data);
 std::vector<std::vector<double>> normalize_image_data(unsigned char** data, uint32_t num_images, uint32_t image_size);
 std::vector<std::vector<double>> normalize_target_data(unsigned char* data, uint32_t num_images);
@@ -34,18 +33,7 @@ int main(int argc, char** argv) {
     std::vector<std::vector<double>> train_x_normalized = normalize_image_data(train_x, num_test_imgs, img_size);
     std::vector<std::vector<double>> train_y_normalized = normalize_target_data(train_y, num_test_imgs);
 
-    for (int i = 0; i < num_test_imgs; ++i) {
-        if (i % 1500 == 0) {
-            display_normalized_image(train_x_normalized[i]);
-            std::cout << static_cast<int>(train_y[i]) << ", ";
-            std::cout << "[ ";
-            for (const double& d : train_y_normalized[i]) {
-                std::cout << d << " ";
-            }
-            std::cout << " ]\n";
-        } 
-    }
-
+    // Freeing un-normalized data that was allocated
     for (int i = 0; i < num_test_imgs; ++i) {
         delete[] train_x[i];
     }
@@ -54,48 +42,57 @@ int main(int argc, char** argv) {
 
     delete[] train_y;
     
-    std::vector<uint32_t> topology = {img_size, 32, 16, 10};
-
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<double> dis(0.0f, 1.0f);
+    std::vector<NeuralNet::LayerConfig> topology = {
+        {img_size, Neuron::TanH},
+        {32, Neuron::TanH},
+        {16, Neuron::TanH},
+        {10, Neuron::SoftMax},
+    };
 
     assert(train_x_normalized.size() == train_y_normalized.size());
 
     std::vector<double> result_values = {};
 
     NeuralNet myNet(topology);
-    Neuron::alpha_ = 0.45f;
-    Neuron::eta_ = 0.1f;
+    Neuron::alpha_ = 0.43251231231f;
+    Neuron::eta_ = 0.12123512412414f;
    
-    for ( int i = 0; i < train_x_normalized.size(); ++i) {
-        // Get new input data and feed it forward
-        assert(train_x_normalized[i].size() == topology[0]);
-        myNet.FeedForward(train_x_normalized[i]);
+    for (int epoch = 0; epoch <= 100; ++epoch) {
+        int rand_index = rand() % train_x_normalized.size();
 
-        // Get the nets results
-        myNet.GetResults(result_values);
-        
-        // Train the net what the outputs should have been
-        assert(train_y_normalized[i].size() == topology.back());
-        myNet.BackPropagation(train_y_normalized[i]);
+        for ( int i = 0; i < train_x_normalized.size(); ++i) {
+            // Get new input data and feed it forward
+            assert(train_x_normalized[i].size() == topology[0].size_);
+            myNet.FeedForward(train_x_normalized[i]);
 
-        if (i % 1000 == 0) {
-            std::cout << "Error " << i << ": " << myNet.get_recent_average_error() << "\n";
-
-            std::cout << "[ ";
-            for (int j = 0; j < train_y_normalized[i].size(); ++j) {
-                std::cout << train_y_normalized[i][j] << " "; 
+            // Get the nets results
+            if (i == rand_index) {
+                myNet.GetResults(result_values);
             }
-            std::cout << " ]\n";
 
-            std::cout << "[ ";
-            for (int j = 0; j < train_y_normalized[i].size(); ++j) {
-                std::cout << result_values[i] << " "; 
-            }
-            std::cout << " ]\n";
+            // Train the net what the outputs should have been
+            assert(train_y_normalized[i].size() == topology.back().size_);
+            myNet.BackPropagation(train_y_normalized[i]);
+
         }
+
+        display_normalized_image(train_x_normalized[rand_index]);
+        std::cout << "Error " << epoch << ": " << myNet.get_recent_average_error() << "\n";
+
+        std::cout << "[ ";
+        for (int j = 0; j < train_y_normalized[rand_index].size(); ++j) {
+            std::cout << train_y_normalized[rand_index][j] << " "; 
+        }
+        std::cout << " ]\n";
+
+        std::cout << "[ ";
+        for (int j = 0; j < result_values.size(); ++j) {
+            std::cout << result_values[j] << " "; 
+        }
+        std::cout << " ]\n";
+
     }
+
 
     return 0;
 }
@@ -162,19 +159,6 @@ unsigned char* read_mnist_labels(std::string full_path, uint32_t& number_of_labe
     }
 }
 
-void display_mnist_image(unsigned char* image_data, uint32_t image_size) {
-    const char ascii_chars[] = {' ', '.', ',', ':', ';', '-', '=', '+', '*', '#', '%', '$', '@', '&'};
-    const int num_chars = sizeof(ascii_chars) / sizeof(ascii_chars[0]);
-
-    for (int i = 0; i < image_size; ++i) {
-        int intensity = image_data[i] / (256 / num_chars);
-        std::cout << ascii_chars[intensity] << " ";
-        if ((i + 1) % 28 == 0) 
-            std::cout << "\n";
-    }
-    std::cout << std::endl;
-}
-
 void display_normalized_image(std::vector<double> &image_data) {
     const char ascii_chars[] = {' ', '.', ',', ':', ';', '-', '=', '+', '*', '#', '%', '$', '@', '&'};
     const int num_chars = sizeof(ascii_chars) / sizeof(ascii_chars[0]);
@@ -193,7 +177,7 @@ std::vector<std::vector<double>> normalize_image_data(unsigned char** data, uint
 
     for (int i = 0; i < num_images; ++i) {
         for (int j = 0; j < image_size; ++j) {
-            const double normalizedValue = static_cast<double>(data[i][j]) / 255.0;
+            const double normalizedValue = static_cast<double>(data[i][j]) / 255.0f;
             normalizedData[i][j] = normalizedValue;
         }
     }
