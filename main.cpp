@@ -33,10 +33,10 @@ int main(int argc, char** argv) {
     std::vector<std::vector<double>> train_y_encoded = hot_encode_target_data(train_y, num_test_imgs);
     
     std::vector<NeuralNet::LayerConfig> topology = {
-        {img_size, Neuron::InputLayer},
-        {22, Neuron::TanH},
-        {14, Neuron::TanH},
-        {10, Neuron::SoftMax},
+        {img_size, NLayer::InputLayer},
+        {22, NLayer::TanH},
+        {14, NLayer::TanH},
+        {10, NLayer::SoftMax},
     };
 
     assert(train_x_normalized.size() == train_y_encoded.size());
@@ -44,8 +44,8 @@ int main(int argc, char** argv) {
     std::vector<double> result_values = {};
 
     NeuralNet myNet(topology);
-    Neuron::alpha_ = 0.314159265399999f;
-    Neuron::eta_ = 0.00314159265399999f;
+    NLayer::alpha_ = 0.314159265399999f;
+    NLayer::eta_ = 0.00314159265399999f;
    
     for (int epoch = 0; epoch <= 100; ++epoch) {
         int rand_index = rand() % train_x_normalized.size();
