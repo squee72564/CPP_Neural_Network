@@ -22,7 +22,7 @@ std::vector<std::vector<unsigned char> > read_mnist_images(
         file.read((char *)&magic_number, sizeof(magic_number));
         magic_number = reverseInt(magic_number);
 
-        if(magic_number != 2051) throw std::runtime_error("Invalid MNIST image file!");
+        if(magic_number != 2051) throw std::runtime_error(full_path + " is an invalid MNIST image file!");
 
         file.read((char *)&number_of_images, sizeof(number_of_images)), number_of_images = reverseInt(number_of_images);
         file.read((char *)&n_rows, sizeof(n_rows)), n_rows = reverseInt(n_rows);
@@ -58,7 +58,7 @@ std::vector<unsigned char> read_mnist_labels(
         file.read((char *)&magic_number, sizeof(magic_number));
         magic_number = reverseInt(magic_number);
 
-        if(magic_number != 2049) throw std::runtime_error("Invalid MNIST label file!");
+        if(magic_number != 2049) throw std::runtime_error(full_path + " is an invalid MNIST label file!");
 
         file.read((char *)&number_of_labels, sizeof(number_of_labels)), number_of_labels = reverseInt(number_of_labels);
 
