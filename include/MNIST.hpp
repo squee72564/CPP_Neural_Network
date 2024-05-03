@@ -3,7 +3,11 @@
 
 namespace MNIST {
 
-std::vector<std::vector<unsigned char> > read_mnist_images(std::string full_path, uint32_t& number_of_images, uint32_t& image_size) {
+std::vector<std::vector<unsigned char> > read_mnist_images(
+        std::string full_path,
+        uint32_t& number_of_images,
+        uint32_t& image_size)
+{
     auto reverseInt = [](int i) {
         unsigned char c1, c2, c3, c4;
         c1 = i & 255, c2 = (i >> 8) & 255, c3 = (i >> 16) & 255, c4 = (i >> 24) & 255;
@@ -37,7 +41,10 @@ std::vector<std::vector<unsigned char> > read_mnist_images(std::string full_path
     }
 }
 
-std::vector<unsigned char> read_mnist_labels(std::string full_path, uint32_t& number_of_labels) {
+std::vector<unsigned char> read_mnist_labels(
+        std::string full_path,
+        uint32_t& number_of_labels) 
+{
     auto reverseInt = [](int i) {
         unsigned char c1, c2, c3, c4;
         c1 = i & 255, c2 = (i >> 8) & 255, c3 = (i >> 16) & 255, c4 = (i >> 24) & 255;
