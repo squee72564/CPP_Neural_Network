@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
     delete[] train_y;
     
     std::vector<NeuralNet::LayerConfig> topology = {
-        {img_size, Neuron::Relu},
+        {img_size, Neuron::InputLayer},
         {22, Neuron::TanH},
         {14, Neuron::TanH},
         {10, Neuron::SoftMax},
@@ -54,8 +54,8 @@ int main(int argc, char** argv) {
     std::vector<double> result_values = {};
 
     NeuralNet myNet(topology);
-    Neuron::alpha_ = 0.43251231231f;
-    Neuron::eta_ = 0.14123512412414f;
+    Neuron::alpha_ = 0.07251231231f;
+    Neuron::eta_ = 0.00223512412414f;
    
     for (int epoch = 0; epoch <= 100; ++epoch) {
         int rand_index = rand() % train_x_normalized.size();
@@ -78,6 +78,8 @@ int main(int argc, char** argv) {
 
         display_normalized_image(train_x_normalized[rand_index]);
         std::cout << "Error " << epoch << ": " << myNet.get_recent_average_error() << "\n";
+
+        assert(result_values.size() == train_y_normalized[rand_index].size());
 
         std::cout << "[ ";
         for (int j = 0; j < train_y_normalized[rand_index].size(); ++j) {
