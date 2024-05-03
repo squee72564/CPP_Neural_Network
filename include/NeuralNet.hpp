@@ -34,8 +34,4 @@ private:
     double recent_average_smoothing_factor_;
 };
 
-inline std::random_device NeuralNet::rd;
-inline std::mt19937 NeuralNet::gen(rd());
-inline std::uniform_real_distribution<double> NeuralNet::dis(0.0f, 1.0f);
-
 #endif

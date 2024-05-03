@@ -37,7 +37,5 @@ public:
     void UpdateInputWeights(Layer &prev_layer);
 };
 
-inline double Neuron::eta_ = 0.15f;    // overall net learning
-inline double Neuron::alpha_ = 0.5f;   // momentum, multiplier of last delta_weight
 
 #endif
