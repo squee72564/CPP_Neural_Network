@@ -24,6 +24,7 @@ public:
         Sigmoid,
         Relu,
         SoftMax,
+        InputLayer,
     };
 
 
