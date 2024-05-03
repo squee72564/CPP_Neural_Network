@@ -7,7 +7,7 @@ std::random_device NeuralNet::rd;
 std::mt19937 NeuralNet::gen(rd());
 std::uniform_real_distribution<double> NeuralNet::dis(0.0f, 1.0f);
 
-NeuralNet::NeuralNet(const std::vector<uint32_t> &topology) 
+NeuralNet::NeuralNet(const std::vector<LayerConfig> &topology) 
   : layers_(topology.size()),
     error_(0.0f),
     recent_average_error_(0.0f),
@@ -17,11 +17,11 @@ NeuralNet::NeuralNet(const std::vector<uint32_t> &topology)
 
         const uint32_t num_neuron_outputs = (i == layers_.size()-1)
             ? 0 
-            : topology[i+1];
+            : topology[i+1].size_;
 
         layers_[i] = Layer(
-                topology[i] + 1, // Include Bias Neuron
-                Neuron(num_neuron_outputs)
+                topology[i].size_ + 1, // Include Bias Neuron
+                Neuron(num_neuron_outputs, topology[i].activation_function_)
             );
 
         
@@ -49,9 +49,14 @@ void NeuralNet::FeedForward(const std::vector<double> &input_values)
     // Forward Propegate
     for (std::size_t layer_idx = 1; layer_idx < layers_.size(); ++layer_idx) {
         Layer &prev_layer = layers_[layer_idx-1];
+        Layer &curr_layer = layers_[layer_idx];
 
         for (std::size_t neuron_idx = 0; neuron_idx < layers_[layer_idx].size()-1; ++neuron_idx) {
-            layers_[layer_idx][neuron_idx].FeedForward(prev_layer);
+            curr_layer[neuron_idx].FeedForward(prev_layer);
+        }
+        
+        if (curr_layer[0].activation_function_ == Neuron::SoftMax) {
+            ApplySoftMax(curr_layer);
         }
     }
 }
@@ -127,4 +132,25 @@ double NeuralNet::get_recent_average_error() const {
 
 inline double NeuralNet::get_random_weight() const {
     return NeuralNet::dis(NeuralNet::gen);
+}
+
+void NeuralNet::ApplySoftMax(std::vector<Neuron>& curr_layer) {
+    // Apply softmax activation
+    double max_val = std::max_element(
+                        curr_layer.begin(),
+                        curr_layer.end(), 
+                        [] (const auto &a, const auto &b ){ return a.output_value_ < b.output_value_; }
+                    )->output_value_;
+
+    double sum_exp = 0.0;
+
+    for (size_t j = 0; j < curr_layer.size(); ++j) {
+        curr_layer[j].output_value_ = std::exp(curr_layer[j].output_value_ - max_val); // Subtract max value for numerical stability
+        sum_exp += curr_layer[j].output_value_;
+    }
+
+    for (size_t j = 0; j < curr_layer.size(); ++j) {
+        curr_layer[j].output_value_ /= sum_exp;  // Normalize to obtain probabilities
+    }
+
 }
