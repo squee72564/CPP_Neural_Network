@@ -17,13 +17,17 @@ public:
 
 class NNLayer {
 public:
-    
     enum ActivationFunction {
         TanH = 0,
         Sigmoid,
         Relu,
         SoftMax,
         InputLayer,
+    };
+
+    struct LayerConfig {
+        uint32_t size_;
+        ActivationFunction activation_function_;
     };
 	
 	NNLayer();
