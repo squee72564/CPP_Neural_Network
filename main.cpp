@@ -43,9 +43,9 @@ int main(int argc, char** argv) {
     delete[] train_y;
     
     std::vector<NeuralNet::LayerConfig> topology = {
-        {img_size, Neuron::TanH},
-        {32, Neuron::TanH},
-        {16, Neuron::TanH},
+        {img_size, Neuron::Relu},
+        {22, Neuron::TanH},
+        {14, Neuron::TanH},
         {10, Neuron::SoftMax},
     };
 
@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
 
     NeuralNet myNet(topology);
     Neuron::alpha_ = 0.43251231231f;
-    Neuron::eta_ = 0.12123512412414f;
+    Neuron::eta_ = 0.14123512412414f;
    
     for (int epoch = 0; epoch <= 100; ++epoch) {
         int rand_index = rand() % train_x_normalized.size();
