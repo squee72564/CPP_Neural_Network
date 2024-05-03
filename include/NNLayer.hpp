@@ -15,7 +15,7 @@ public:
     Connection() : weight_(0), delta_weight_(0) {};
 };
 
-class NLayer {
+class NNLayer {
 public:
     
     enum ActivationFunction {
@@ -26,9 +26,9 @@ public:
         InputLayer,
     };
 	
-	NLayer();
-    NLayer(uint32_t layer_size, uint32_t num_outputs, ActivationFunction f);
-	~NLayer();
+	NNLayer();
+    NNLayer(uint32_t layer_size, uint32_t num_outputs, ActivationFunction f);
+	~NNLayer();
 
     std::vector<std::vector<Connection>> output_weights_;
     std::vector<double> output_values_;
@@ -49,11 +49,11 @@ public:
     double ApplyActivationFunction(double x);
     double ApplyActivationFunctionDerivative(double x);
     void ApplySoftMax();
-    double SumDOW(const uint32_t curr_idx, const NLayer &next_layer) const;
-    void FeedForward(const NLayer& prev_layer);
+    double SumDOW(const uint32_t curr_idx, const NNLayer &next_layer) const;
+    void FeedForward(const NNLayer& prev_layer);
     void CalculateOutputGradients(const std::vector<double> &target_values);
-    void CalculateHiddenGradients(const NLayer &next_layer);
-    void UpdateInputWeights(NLayer &prev_layer);
+    void CalculateHiddenGradients(const NNLayer &next_layer);
+    void UpdateInputWeights(NNLayer &prev_layer);
 };
 
 #endif

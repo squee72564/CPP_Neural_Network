@@ -1,9 +1,9 @@
-#include "NLayer.hpp"
+#include "NNLayer.hpp"
 
-inline double NLayer::eta_ = 0.25f;    // overall net learning
-inline double NLayer::alpha_ = 0.3f;   // momentum, multiplier of last delta_weight
+inline double NNLayer::eta_ = 0.25f;    // overall net learning
+inline double NNLayer::alpha_ = 0.3f;   // momentum, multiplier of last delta_weight
 
-NLayer::NLayer()
+NNLayer::NNLayer()
   : output_weights_(),
     output_values_(),
 	gradients_(),
@@ -13,7 +13,7 @@ NLayer::NLayer()
 }
 
 
-NLayer::NLayer(uint32_t layer_size, uint32_t num_outputs, NLayer::ActivationFunction activation_function)
+NNLayer::NNLayer(uint32_t layer_size, uint32_t num_outputs, NNLayer::ActivationFunction activation_function)
   : output_weights_(layer_size, std::vector<Connection>(num_outputs)),
     output_values_(layer_size, 0.0f),
     gradients_(layer_size, 0.0f),
@@ -22,7 +22,7 @@ NLayer::NLayer(uint32_t layer_size, uint32_t num_outputs, NLayer::ActivationFunc
 {
 }
 
-NLayer::~NLayer() {
+NNLayer::~NNLayer() {
 	for (auto& neuron_connections : output_weights_) {
 		neuron_connections.clear();
 	}
@@ -32,18 +32,18 @@ NLayer::~NLayer() {
 	gradients_.clear();
 }
 
-double NLayer::ApplyActivationFunction(double x) {
+double NNLayer::ApplyActivationFunction(double x) {
     double ret = 0.0f;
 
     switch (activation_function_) {
-        case NLayer::TanH:
-            ret = NLayer::_TanH(x);
+        case NNLayer::TanH:
+            ret = NNLayer::_TanH(x);
             break;
-        case NLayer::Sigmoid:
-            ret = NLayer::_Sigmoid(x);
+        case NNLayer::Sigmoid:
+            ret = NNLayer::_Sigmoid(x);
             break;
-        case NLayer::Relu:
-            ret = NLayer::_Relu(x);
+        case NNLayer::Relu:
+            ret = NNLayer::_Relu(x);
             break;
         default:
             ret = x;
@@ -53,19 +53,19 @@ double NLayer::ApplyActivationFunction(double x) {
     return ret;
 }
 
-double NLayer::ApplyActivationFunctionDerivative(double x)
+double NNLayer::ApplyActivationFunctionDerivative(double x)
 {
     double ret = 0.0f;
 
     switch (activation_function_) {
-        case NLayer::TanH:
-            ret = NLayer::_TanHDerivative(x);
+        case NNLayer::TanH:
+            ret = NNLayer::_TanHDerivative(x);
             break;
-        case NLayer::Sigmoid:
-            ret = NLayer::_SigmoidDerivative(x);
+        case NNLayer::Sigmoid:
+            ret = NNLayer::_SigmoidDerivative(x);
             break;
-        case NLayer::Relu:
-            ret = NLayer::_ReluDerivative(x);
+        case NNLayer::Relu:
+            ret = NNLayer::_ReluDerivative(x);
             break;
         default:
             ret = x;
@@ -75,7 +75,7 @@ double NLayer::ApplyActivationFunctionDerivative(double x)
     return ret;
 }
 
-double NLayer::SumDOW(const uint32_t neuron_idx, const NLayer &next_layer) const {
+double NNLayer::SumDOW(const uint32_t neuron_idx, const NNLayer &next_layer) const {
     double sum = 0.0f;
 
     for (std::size_t n = 0; n < next_layer.layer_size_-1; ++n) {
@@ -85,7 +85,7 @@ double NLayer::SumDOW(const uint32_t neuron_idx, const NLayer &next_layer) const
     return sum;
 }
 
-void NLayer::FeedForward(const NLayer& prev_layer) {
+void NNLayer::FeedForward(const NNLayer& prev_layer) {
 
     for (int neuron_idx = 0; neuron_idx < layer_size_-1; ++neuron_idx) {
         double sum = 0.0f;
@@ -99,19 +99,19 @@ void NLayer::FeedForward(const NLayer& prev_layer) {
         output_values_[neuron_idx] = ApplyActivationFunction(sum);
     }
 
-    if (activation_function_ == NLayer::SoftMax) {
+    if (activation_function_ == NNLayer::SoftMax) {
         ApplySoftMax();
     }
 
 }
 
-void NLayer::CalculateOutputGradients(const std::vector<double> &target_values) {
+void NNLayer::CalculateOutputGradients(const std::vector<double> &target_values) {
     assert(layer_size_-1 == target_values.size());
 
     for (int i = 0; i < layer_size_-1; ++i) {
         double delta = target_values[i] - output_values_[i];
 
-        if (activation_function_ == NLayer::SoftMax) {
+        if (activation_function_ == NNLayer::SoftMax) {
             gradients_[i] = delta;
         } else {
             gradients_[i] = delta * ApplyActivationFunctionDerivative(output_values_[i]); 
@@ -120,14 +120,14 @@ void NLayer::CalculateOutputGradients(const std::vector<double> &target_values) 
 
 }
 
-void NLayer::CalculateHiddenGradients(const NLayer &next_layer) {
+void NNLayer::CalculateHiddenGradients(const NNLayer &next_layer) {
     for (int i = 0; i < layer_size_; ++i) {
         double dow = SumDOW(i, next_layer);
         gradients_[i] = dow * ApplyActivationFunctionDerivative(output_values_[i]); 
     }
 }
 
-void NLayer::UpdateInputWeights(NLayer &prev_layer) {
+void NNLayer::UpdateInputWeights(NNLayer &prev_layer) {
 
     for (std::size_t i = 0; i < layer_size_-1; ++i) {
         for (std::size_t n = 0; n < prev_layer.layer_size_; ++n) {
@@ -148,36 +148,36 @@ void NLayer::UpdateInputWeights(NLayer &prev_layer) {
     }
 }
 
-double NLayer::_TanH(double x) {
+double NNLayer::_TanH(double x) {
     return tanh(x);
 }
 
-double NLayer::_TanHDerivative(double x) {
+double NNLayer::_TanHDerivative(double x) {
     // Derivative of tanh(x) is sech^2(x)
     double sech_x = 1.0 / cosh(x);
     return sech_x * sech_x;
 }
 
-double NLayer::_Sigmoid(double x) {
+double NNLayer::_Sigmoid(double x) {
     return 1.0 / (1.0 + exp(-x));
 }
 
-double NLayer::_SigmoidDerivative(double x) {
+double NNLayer::_SigmoidDerivative(double x) {
     // Derivative of sigmoid(x) is sigmoid(x) * (1 - sigmoid(x))
-    double sigmoid_x = NLayer::_Sigmoid(x);
+    double sigmoid_x = NNLayer::_Sigmoid(x);
     return sigmoid_x * (1.0 - sigmoid_x);
 }
 
-double NLayer::_Relu(double x) {
+double NNLayer::_Relu(double x) {
     return (x > 0) ? x : 0;
 }
 
-double NLayer::_ReluDerivative(double x) {
+double NNLayer::_ReluDerivative(double x) {
     // Derivative of relu(x) is 1 for x > 0, 0 otherwise
     return (x > 0) ? 1.0 : 0;
 }
 
-void NLayer::ApplySoftMax() {
+void NNLayer::ApplySoftMax() {
     // Apply softmax activation
     double max_val = *std::max_element(
                         output_values_.begin(),

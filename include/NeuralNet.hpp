@@ -7,14 +7,14 @@
 #include <cassert>
 #include <cstdint>
 
-#include "NLayer.hpp"
+#include "NNLayer.hpp"
 
 
 class NeuralNet {
 public:
     struct LayerConfig {
         uint32_t size_;
-        NLayer::ActivationFunction activation_function_;
+        NNLayer::ActivationFunction activation_function_;
     };
 
     NeuralNet(const std::vector<LayerConfig> &topology);
@@ -31,7 +31,7 @@ public:
 
 private:
 
-    std::vector<NLayer> layers_;
+    std::vector<NNLayer> layers_;
     double error_;
     double recent_average_error_;
     double recent_average_smoothing_factor_;

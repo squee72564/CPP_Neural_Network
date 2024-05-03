@@ -19,7 +19,7 @@ NeuralNet::NeuralNet(const std::vector<LayerConfig> &topology)
             ? 0 
             : topology[i+1].size_;
 
-         layers_[i] = NLayer(
+         layers_[i] = NNLayer(
                 topology[i].size_ + 1, // Include Bias Neuron
                 num_neuron_outputs,
                 topology[i].activation_function_
@@ -48,8 +48,8 @@ void NeuralNet::FeedForward(const std::vector<double> &input_values)
 
     // Forward Propegate
     for (std::size_t layer_idx = 1; layer_idx < layers_.size(); ++layer_idx) {
-        NLayer &prev_layer = layers_[layer_idx-1];
-        NLayer &curr_layer = layers_[layer_idx];
+        NNLayer &prev_layer = layers_[layer_idx-1];
+        NNLayer &curr_layer = layers_[layer_idx];
 
         curr_layer.FeedForward(prev_layer);
     }
@@ -86,8 +86,8 @@ void NeuralNet::BackPropagation(const std::vector<double> &target_values)
     // Calculate gradients on hidden layers
 
     for (std::size_t layer_idx = layers_.size()-2; layer_idx > 0; --layer_idx) {
-        NLayer &hidden_layer = layers_[layer_idx];
-        NLayer &next_layer = layers_[layer_idx+1];
+        NNLayer &hidden_layer = layers_[layer_idx];
+        NNLayer &next_layer = layers_[layer_idx+1];
         
         hidden_layer.CalculateHiddenGradients(next_layer);
     }
@@ -95,8 +95,8 @@ void NeuralNet::BackPropagation(const std::vector<double> &target_values)
     // For all layers from outputs to first hidden layer, update connection weights
     
     for (std::size_t layer_idx = layers_.size()-1; layer_idx > 0; --layer_idx) {
-        NLayer &layer = layers_[layer_idx];
-        NLayer &prev_layer = layers_[layer_idx-1];
+        NNLayer &layer = layers_[layer_idx];
+        NNLayer &prev_layer = layers_[layer_idx-1];
 
         layer.UpdateInputWeights(prev_layer);
     }
