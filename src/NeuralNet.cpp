@@ -27,7 +27,7 @@ NeuralNet::NeuralNet(const std::vector<NNLayer::LayerConfig> &topology)
          
 
         // Randomize weights in each connection for each neuron
-        for (std::size_t n = 0; n < topology[i].size_ + 1; ++n) {
+        for (std::size_t n = 0; n < layers_[i].output_weights_.size(); ++n) {
             for (auto& connection : layers_[i].output_weights_[n]) {
                 connection.weight_ = get_random_weight();
             }
@@ -37,7 +37,6 @@ NeuralNet::NeuralNet(const std::vector<NNLayer::LayerConfig> &topology)
 
 void NeuralNet::FeedForward(const std::vector<double> &input_values)
 {
-
     // assert inputs == input neruons - bias nueron
     assert(input_values.size() == layers_[0].layer_size_ - 1);
 
