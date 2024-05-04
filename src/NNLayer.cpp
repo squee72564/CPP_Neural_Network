@@ -14,7 +14,7 @@ NNLayer::NNLayer()
 
 
 NNLayer::NNLayer(uint32_t layer_size, uint32_t num_outputs, NNLayer::ActivationFunction activation_function)
-  : output_weights_(layer_size, std::vector<Connection>(num_outputs)),
+  : output_weights_(num_outputs, std::vector<Connection>(layer_size)),
     output_values_(layer_size, 0.0f),
     gradients_(layer_size, 0.0f),
     activation_function_(activation_function),
@@ -79,21 +79,20 @@ double NNLayer::SumDOW(const uint32_t neuron_idx, const NNLayer &next_layer) con
     double sum = 0.0f;
 
     for (std::size_t n = 0; n < next_layer.layer_size_-1; ++n) {
-        sum += output_weights_[neuron_idx][n].weight_ * next_layer.gradients_[n];
+        sum += output_weights_[n][neuron_idx].weight_ * next_layer.gradients_[n];
     }
 
     return sum;
 }
 
 void NNLayer::FeedForward(const NNLayer& prev_layer) {
-
     for (int neuron_idx = 0; neuron_idx < layer_size_-1; ++neuron_idx) {
         double sum = 0.0f;
         
         for (int prev_neuron_idx = 0; prev_neuron_idx < prev_layer.layer_size_; ++prev_neuron_idx) {
             sum += 
                 prev_layer.output_values_[prev_neuron_idx]
-                * prev_layer.output_weights_[prev_neuron_idx][neuron_idx].weight_;
+                * prev_layer.output_weights_[neuron_idx][prev_neuron_idx].weight_;
         }
         
         output_values_[neuron_idx] = ApplyActivationFunction(sum);
@@ -128,10 +127,9 @@ void NNLayer::CalculateHiddenGradients(const NNLayer &next_layer) {
 }
 
 void NNLayer::UpdateInputWeights(NNLayer &prev_layer) {
-
     for (std::size_t i = 0; i < layer_size_-1; ++i) {
         for (std::size_t n = 0; n < prev_layer.layer_size_; ++n) {
-            double old_delta_weight = prev_layer.output_weights_[n][i].delta_weight_;
+            double old_delta_weight = prev_layer.output_weights_[i][n].delta_weight_;
 
             double new_delta_weight =
                 // Individual input, magnified by the gradient and train rate:
@@ -142,8 +140,8 @@ void NNLayer::UpdateInputWeights(NNLayer &prev_layer) {
                 + alpha_
                 * old_delta_weight;
 
-            prev_layer.output_weights_[n][i].delta_weight_ = new_delta_weight;
-            prev_layer.output_weights_[n][i].weight_ += new_delta_weight;
+            prev_layer.output_weights_[i][n].delta_weight_ = new_delta_weight;
+            prev_layer.output_weights_[i][n].weight_ += new_delta_weight;
         }
     }
 }
